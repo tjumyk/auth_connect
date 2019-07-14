@@ -418,6 +418,12 @@ def clear_user() -> None:
         del session[_session_access_token_key]
 
 
+def get_user_by_id(uid: int) -> [User, None]:
+    config = current_app.config.get(_config_key)
+    data = _request_resource_json(config['server']['admin_users_api'].rstrip('/') + '/%d' % uid, _get_access_token())
+    return _parse_user(data)
+
+
 def get_users() -> List[User]:
     config = current_app.config.get(_config_key)
     data = _request_resource_json(config['server']['admin_users_api'], _get_access_token())
