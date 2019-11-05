@@ -439,10 +439,23 @@ def get_users() -> List[User]:
     return users
 
 
+def get_group_by_id(gid: int) -> [Group, None]:
+    config = current_app.config.get(_config_key)
+    data = _request_resource_json(config['server']['admin_groups_api'].rstrip('/') + '/%d' % gid, _get_access_token())
+    return _parse_group(data)
+
+
 def get_groups() -> List[Group]:
     config = current_app.config.get(_config_key)
     data = _request_resource_json(config['server']['admin_groups_api'], _get_access_token())
     return [_parse_group(_g) for _g in data]
+
+
+def get_users_in_group(gid: int) -> List[User]:
+    config = current_app.config.get(_config_key)
+    data = _request_resource_json(config['server']['admin_groups_api'].rstrip('/') + '/%d/users' % gid,
+                                  _get_access_token())
+    return [_parse_user(u) for u in data]
 
 
 def add_group(name, description=None) -> Group:
