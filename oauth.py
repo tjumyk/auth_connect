@@ -424,6 +424,13 @@ def get_user_by_id(uid: int) -> [User, None]:
     return _parse_user(data)
 
 
+def get_user_by_name(name: str) -> [User, None]:
+    config = current_app.config.get(_config_key)
+    data = _request_resource_json(config['server']['admin_user_by_name_api'].rstrip('/') + '/%s' % name,
+                                  _get_access_token())
+    return _parse_user(data)
+
+
 def get_users() -> List[User]:
     config = current_app.config.get(_config_key)
     data = _request_resource_json(config['server']['admin_users_api'], _get_access_token())
