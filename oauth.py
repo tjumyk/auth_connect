@@ -2,6 +2,9 @@ import json
 from functools import wraps
 from typing import List
 from urllib.parse import urlencode
+import secrets
+from hashlib import sha256
+from base64 import b64encode
 
 import requests
 from flask import Flask, request, current_app, session, redirect, g, jsonify
@@ -12,7 +15,7 @@ _config_key = 'OAUTH'
 _request_user_key = 'oauth_user'
 _session_uid_key = 'uid'
 _session_access_token_key = 'access_token'
-_admin_group_name = 'admin'
+_admin_group_name = 'oauth-admin'
 
 
 # ==== Exceptions ====
@@ -101,7 +104,9 @@ def _build_redirect_url(original_path, state):
     config_client = config['client']
     params = {
         'client_id': config_client['id'],
-        'redirect_url': config_client['url'] + config_client['callback_path']
+        'redirect_uri': config_client['url'] + config_client['callback_path'],
+        'response_type': 'code',
+        'scope': 'read_user profile email openid'
     }
     if original_path:
         params['original_path'] = original_path
@@ -175,11 +180,19 @@ def _get_original_path():
 
 def _parse_response_error(response):
     try:
-        data = json.loads(response.text)
-        msg = data.get('msg')  # check if it has expected error message format
+        data = {}
+        msg = None
+        raw_data = response.text
+        if raw_data:
+            data = json.loads(raw_data)
+            msg = data.get('msg') or data.get('error')  # check if it has expected error message format
+        else:
+            header_auth = response.headers.get('Www-Authenticate')
+            if header_auth:
+                msg = header_auth
         if int(response.status_code / 100) == 4:  # 4xx
-            return OAuthRequestError(msg=msg, detail=data.get('detail'))
-        return OAuthAPIError(msg=msg, detail=data.get('detail'))
+            return OAuthRequestError(msg=msg, detail=data.get('detail') or data.get('error_description'))
+        return OAuthAPIError(msg=msg, detail=data.get('detail') or data.get('error_description'))
     except (ValueError, KeyError):
         return OAuthAPIError(msg='Status %d' % response.status_code, detail=response.text)
 
@@ -187,11 +200,11 @@ def _parse_response_error(response):
 def _parse_user(_dict):
     if not _dict:
         raise OAuthResultError('empty user body')
-    user = User(_dict.get('id'), _dict.get('name'), _dict.get('email'), _dict.get('nickname'), _dict.get('avatar'))
+    user = User(_dict.get('id') or _dict.get('sub'),
+                _dict.get('name'), _dict.get('email'), _dict.get('nickname'),
+                _dict.get('avatar') or _dict.get('picture'))
     if user.id is None:
         raise OAuthResultError('user id is missing')
-    if type(user.id) != int:
-        raise OAuthResultError('user id should be an integer')
     if not user.name:
         raise OAuthResultError('user name is missing or empty')
     if not user.email:
@@ -215,11 +228,10 @@ def _parse_user(_dict):
 def _parse_group(_dict):
     if not _dict:
         raise OAuthResultError('empty group body')
-    group = Group(_dict.get('id'), _dict.get('name'), _dict.get('description'))
-    if group.id is None:
-        raise OAuthResultError('group id is missing')
-    if type(group.id) != int:
-        raise OAuthResultError('group id should be an integer')
+    if isinstance(_dict, str):
+        group = Group(None, _dict, None)
+    else:
+        group = Group(_dict.get('id'), _dict.get('name'), _dict.get('description'))
     if not group.name:
         raise OAuthResultError('group name is missing or empty')
     return group
@@ -238,8 +250,9 @@ def _request_access_token(authorization_token):
     params = {
         'client_id': config_client['id'],
         'client_secret': config_client['secret'],
-        'redirect_url': config_client['url'] + config_client['callback_path'],
-        'token': authorization_token
+        'redirect_uri': config_client['url'] + config_client['callback_path'],
+        'code': authorization_token,
+        'grant_type': 'authorization_code'
     }
 
     try:
@@ -269,7 +282,7 @@ def _request_resource(path, access_token, method='get', **kwargs):
         params = dict(kwargs['params'])
     else:
         params = {}
-    params['oauth_token'] = access_token
+    params['access_token'] = access_token
     try:
         response = requests.request(method, config_server['url'] + path, params=params, **kwargs)
     except IOError:
@@ -311,7 +324,7 @@ def _oauth_callback():
     config_client = config['client']
 
     args = request.args
-    token = args.get('token')
+    token = args.get('token') or args.get('code')
     state = args.get('state')
     original_path = args.get('original_path')
 
