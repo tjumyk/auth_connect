@@ -1,0 +1,31 @@
+{
+  "clients": [
+    {
+      "id": 1,
+      "secret": "someLongSecret",
+      "redirect_url": "http://localhost:8888/oauth-callback"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Mock Admin",
+      "email": "admin@mock.local",
+      "nickname": "admin",
+      "avatar": "",
+      "groups": [{"id": 1}]
+    },
+    {
+      "id": 2,
+      "name": "Mock User",
+      "email": "user@mock.local",
+      "nickname": "user",
+      "avatar": "",
+      "groups": [{"id": 2}]
+    }
+  ],
+  "groups": [
+    { "id": 1, "name": "admin", "description": "Administrators" },
+    { "id": 2, "name": "users", "description": "Regular users" }
+  ]
+}
