@@ -424,6 +424,13 @@ def get_user_by_id(uid: int) -> [User, None]:
     return _parse_user(data)
 
 
+def get_user_by_id_with_token(uid: int, access_token: str) -> [User, None]:
+    """Fetch user by id using a given access token (for server-side e.g. notifications)."""
+    config = current_app.config.get(_config_key)
+    data = _request_resource_json(config['server']['admin_users_api'].rstrip('/') + '/%d' % uid, access_token)
+    return _parse_user(data)
+
+
 def get_user_by_name(name: str) -> [User, None]:
     config = current_app.config.get(_config_key)
     data = _request_resource_json(config['server']['admin_user_by_name_api'].rstrip('/') + '/%s' % name,
