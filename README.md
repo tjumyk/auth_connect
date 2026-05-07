@@ -121,6 +121,29 @@ Your app’s OAuth client and local routes:
 
 If validation fails, the library raises `OAuthResultError` with details.
 
+## Frontend Zod schemas
+
+This repo also includes a small frontend library at `frontend/` that exposes `zod` schemas for the Flask-bound OAuth surface routes configured in `oauth.init_app(...)`.
+
+- `OAuthCallbackQuerySchema` (`token`, optional `state`, optional `original_path`)
+- `OAuthErrorResponseSchema` (`msg`, optional `detail`, optional `redirect_url`)
+- `AdminUserRouteParamsSchema` (`uid`)
+- `AdminGroupRouteParamsSchema` (`gid`)
+- `OAuthRouteBindingsSchema` (route binding object mirrored from backend validation)
+
+Example:
+
+```ts
+import {
+  OAuthCallbackQuerySchema,
+  OAuthErrorResponseSchema,
+  parseOAuthCallbackQuery,
+} from "auth-connect-frontend";
+
+const query = parseOAuthCallbackQuery(new URLSearchParams(window.location.search));
+const err = OAuthErrorResponseSchema.parse(await response.json());
+```
+
 ## 401 and `redirect_url`
 
 When a request is not logged in and the client expects JSON (e.g. API or SPA), the library returns **401** with a JSON body containing `msg`, optional `detail`, and **`redirect_url`** (the OAuth authorization URL). A frontend can redirect the browser to `redirect_url` to start the login flow.
@@ -184,6 +207,10 @@ auth_connect/
 ├── __init__.py
 ├── README.md
 ├── oauth.py                      # Backward-compatible public facade
+├── frontend/                     # Frontend Zod schema package
+│   ├── package.json
+│   └── src/
+│       └── index.ts
 ├── core/                         # Internal implementation modules
 │   ├── constants.py
 │   ├── exceptions.py
