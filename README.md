@@ -7,12 +7,21 @@ OAuth 2.0 client library for Flask applications. Handles login flow, session, an
 - Python 3.x
 - Flask
 - requests
+- pydantic v2 (optional, enables request/response validation + route payload serialization)
 
 Install with:
 
 ```bash
 pip install -r requirements.txt
 ```
+
+Optional validation mode:
+
+```bash
+pip install pydantic>=2,<3
+```
+
+When `pydantic` is installed, `auth_connect` validates OAuth server request/response payloads and serializes app-bound route/error payloads with schemas. Without `pydantic`, it preserves legacy parsing behavior.
 
 ## Quick start
 
@@ -103,6 +112,15 @@ Your app’s OAuth client and local routes:
 **User** has: `id`, `name`, `email`, `nickname`, `avatar`, `groups` (list of **Group**).  
 **Group** has: `id`, `name`, `description`.
 
+## Validation mode (optional pydantic)
+
+- `POST /api/oauth/token` payload and response are schema-validated.
+- Profile/admin API payloads are schema-validated before conversion to `User`/`Group`.
+- Bound route config in `oauth.init_app(...)` is schema-validated/serialized.
+- API error payloads (e.g. 401 JSON with `redirect_url`) are schema-serialized.
+
+If validation fails, the library raises `OAuthResultError` with details.
+
 ## 401 and `redirect_url`
 
 When a request is not logged in and the client expects JSON (e.g. API or SPA), the library returns **401** with a JSON body containing `msg`, optional `detail`, and **`redirect_url`** (the OAuth authorization URL). A frontend can redirect the browser to `redirect_url` to start the login flow.
@@ -163,11 +181,28 @@ oauth.init_app(app, config_file="oauth.config.json", login_callback=my_callback)
 
 ```
 auth_connect/
+├── __init__.py
 ├── README.md
-├── oauth.py                      # Main client library
+├── oauth.py                      # Backward-compatible public facade
+├── core/                         # Internal implementation modules
+│   ├── constants.py
+│   ├── exceptions.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── validation.py
+│   ├── config.py
+│   ├── parsers.py
+│   ├── client.py
+│   └── flask_integration.py
 ├── mock_oauth_server.py          # Dev mock OAuth server
 ├── oauth.config.example.json     # Example client config (safe to commit)
 ├── oauth.mock.config.example.json # Example mock data (safe to commit)
 ├── requirements.txt
 └── .gitignore                    # oauth.config.json, oauth.mock.config.json
 ```
+
+## Backward compatibility
+
+- Existing imports like `from auth_connect import oauth` continue to work.
+- Existing public APIs (`init_app`, decorators, user/group/admin helpers, exceptions) are preserved.
+- Refactor changes internal structure only; behavior stays compatible with prior versions unless stricter optional validation is enabled via `pydantic`.
