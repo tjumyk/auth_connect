@@ -14,6 +14,7 @@ try:  # pragma: no cover - compatibility for direct module import
     )
     from .core.exceptions import OAuthAPIError, OAuthError, OAuthRequestError, OAuthRequired, OAuthResultError
     from .core.flask_integration import (
+        _is_oauth_skipped,
         add_group,
         clear_user,
         get_group_by_id,
@@ -40,6 +41,7 @@ except ImportError:  # pragma: no cover
     )
     from core.exceptions import OAuthAPIError, OAuthError, OAuthRequestError, OAuthRequired, OAuthResultError  # type: ignore
     from core.flask_integration import (  # type: ignore
+        _is_oauth_skipped,
         add_group,
         clear_user,
         get_group_by_id,
@@ -67,6 +69,7 @@ __all__ = [
     "Group",
     "requires_login",
     "requires_admin",
+    "_is_oauth_skipped",
     "get_uid",
     "get_user",
     "clear_user",
