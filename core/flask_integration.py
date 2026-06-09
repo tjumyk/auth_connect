@@ -75,6 +75,11 @@ def _build_redirect_url(original_path, state):
     return redirect_url + "?" + urlencode(params)
 
 
+def build_oauth_connect_url(original_path='/'):
+    """Build Identity OAuth connect URL for optional SSO button."""
+    return _build_redirect_url(original_path=original_path, state=STATE_NEW_REQUEST)
+
+
 def _build_error_response(error: OAuthError, original_path=None, previous_state=None):
     mime = _preferred_mime()
     if isinstance(error, (OAuthRequired, OAuthRequestError)) and previous_state not in [
@@ -144,6 +149,12 @@ def _oauth_callback():
     try:
         access_token = request_access_token(config, token)
         user = request_oauth_user(config, access_token)
+
+        if _login_callback:
+            ret = _login_callback(user)
+            if ret is not None:
+                return ret
+
         session[SESSION_UID_KEY] = user.id
         session[SESSION_ACCESS_TOKEN_KEY] = access_token
 

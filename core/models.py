@@ -4,12 +4,14 @@
 class User:
     """Represents an authenticated user from the OAuth/account server."""
 
-    def __init__(self, _id, name, email, nickname, avatar):
+    def __init__(self, _id, name, email, nickname, avatar, mobile=None, real_name=None):
         self.id = _id
         self.name = name
         self.email = email
         self.nickname = nickname
         self.avatar = avatar
+        self.mobile = mobile
+        self.real_name = real_name
         self.groups = []
 
     def __repr__(self):
@@ -22,6 +24,8 @@ class User:
             email=self.email,
             nickname=self.nickname,
             avatar=self.avatar,
+            mobile=self.mobile,
+            real_name=self.real_name,
             groups=[group.to_dict() for group in self.groups],
         )
 

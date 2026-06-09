@@ -55,6 +55,8 @@ if HAS_PYDANTIC:
         email: str
         nickname: str | None = None
         avatar: str | None = None
+        mobile: str | None = None
+        real_name: str | None = None
         groups: list[GroupPayload] = Field(default_factory=list)
         group_ids: list[int] = Field(default_factory=list)
 

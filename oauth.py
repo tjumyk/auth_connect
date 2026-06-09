@@ -29,6 +29,7 @@ try:  # pragma: no cover - compatibility for direct module import
         init_app,
         requires_admin,
         requires_login,
+        build_oauth_connect_url,
     )
     from .core.models import Group, User
 except ImportError:  # pragma: no cover
@@ -56,6 +57,7 @@ except ImportError:  # pragma: no cover
         init_app,
         requires_admin,
         requires_login,
+        build_oauth_connect_url,
     )
     from core.models import Group, User  # type: ignore
 
@@ -82,4 +84,5 @@ __all__ = [
     "get_users_in_group",
     "add_group",
     "init_app",
+    "build_oauth_connect_url",
 ]

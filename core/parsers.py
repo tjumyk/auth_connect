@@ -46,6 +46,8 @@ def parse_user(user_dict, server_url):
         normalized.get("email"),
         normalized.get("nickname"),
         normalized.get("avatar"),
+        mobile=normalized.get("mobile"),
+        real_name=normalized.get("real_name"),
     )
     if user.id is None:
         raise OAuthResultError("user id is missing")

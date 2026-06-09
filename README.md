@@ -198,7 +198,7 @@ oauth.init_app(app, config_file="oauth.config.json", login_callback=my_callback)
 ```
 
 - **config_file** — path to the JSON config (server + client).
-- **login_callback** — optional callable `(user) -> None` or return value; if it returns a non-`None` value, that value is returned instead of calling the wrapped view (e.g. to redirect or return a custom response after login).
+- **login_callback** — optional callable `(user) -> None` or return value. Invoked after a successful OAuth token exchange on `/oauth-callback` and on each request protected by `@requires_login` / `@requires_admin`. If it returns a non-`None` value, that value is returned immediately (e.g. error JSON from provisioning); otherwise the OAuth session is established and the callback redirect to `original_path` proceeds as before.
 
 ## File layout
 
