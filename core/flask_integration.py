@@ -80,6 +80,24 @@ def build_oauth_connect_url(original_path='/'):
     return _build_redirect_url(original_path=original_path, state=STATE_NEW_REQUEST)
 
 
+def build_oauth_logout_url() -> str | None:
+    """Build Identity logout URL when server.logout_page is configured."""
+    config = _get_config()
+    server = config.get("server") or {}
+    logout_page = server.get("logout_page")
+    if not logout_page or not isinstance(logout_page, str):
+        return None
+    logout_page = logout_page.strip()
+    if not logout_page:
+        return None
+    base_url = server.get("url", "").rstrip("/")
+    if not base_url:
+        return None
+    if not logout_page.startswith("/"):
+        logout_page = "/" + logout_page
+    return base_url + logout_page
+
+
 def _build_error_response(error: OAuthError, original_path=None, previous_state=None):
     mime = _preferred_mime()
     if isinstance(error, (OAuthRequired, OAuthRequestError)) and previous_state not in [

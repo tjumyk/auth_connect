@@ -132,6 +132,7 @@ if HAS_PYDANTIC:
         profile_page: str
         admin_user_page: str
         admin_group_page: str
+        logout_page: str | None = None
 
 
     class OAuthConfigPayload(BaseModel):
