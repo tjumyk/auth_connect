@@ -15,6 +15,16 @@ from .validation import (
 )
 
 
+def _server_public_url(config: dict) -> str:
+    server = config["server"]
+    return server.get("public_url") or server["url"]
+
+
+def _server_internal_url(config: dict) -> str:
+    server = config["server"]
+    return server.get("internal_url") or server.get("public_url") or server["url"]
+
+
 def request_access_token(config, authorization_token):
     """Exchange an authorization token for an access token."""
     if not authorization_token:
@@ -31,7 +41,7 @@ def request_access_token(config, authorization_token):
     params = validate_token_request(params)
 
     try:
-        response = requests.post(config_server["url"] + config_server["token_api"], params)
+        response = requests.post(_server_internal_url(config) + config_server["token_api"], params)
     except IOError as exc:
         raise OAuthAPIError("failed to access OAuth API (access token)") from exc
 
@@ -59,7 +69,7 @@ def request_resource(config, path, access_token, method="get", **kwargs):
     params[PARAM_OAUTH_TOKEN] = access_token
 
     try:
-        response = requests.request(method, config_server["url"] + path, params=params, **kwargs)
+        response = requests.request(method, _server_internal_url(config) + path, params=params, **kwargs)
     except IOError as exc:
         raise OAuthAPIError("failed to access OAuth API") from exc
 
@@ -80,21 +90,21 @@ def request_resource_json(config, path, access_token, method="get", **kwargs):
 def request_oauth_user(config, access_token):
     """Fetch current user profile from OAuth account API."""
     data = request_resource_json(config, config["server"]["profile_api"], access_token)
-    return parse_user(data, config["server"]["url"])
+    return parse_user(data, _server_public_url(config))
 
 
 def get_user_by_id(config, uid, access_token):
     """Fetch a user by id from admin users API."""
     path = config["server"]["admin_users_api"].rstrip("/") + "/%d" % uid
     data = request_resource_json(config, path, access_token)
-    return parse_user(data, config["server"]["url"])
+    return parse_user(data, _server_public_url(config))
 
 
 def get_user_by_name(config, name, access_token):
     """Fetch a user by name from admin API."""
     path = config["server"]["admin_user_by_name_api"].rstrip("/") + "/%s" % name
     data = request_resource_json(config, path, access_token)
-    return parse_user(data, config["server"]["url"])
+    return parse_user(data, _server_public_url(config))
 
 
 def get_users(config, access_token):
@@ -106,7 +116,7 @@ def get_users(config, access_token):
     groups = {_group["id"]: parse_group(_group) for _group in group_dicts}
     users = []
     for user_dict in user_dicts:
-        user = parse_user(user_dict, config["server"]["url"])
+        user = parse_user(user_dict, _server_public_url(config))
         for gid in user_dict.get("group_ids", []):
             if gid in groups:
                 user.groups.append(groups[gid])
@@ -131,7 +141,7 @@ def get_users_in_group(config, gid, access_token):
     """Fetch users inside a specific group id."""
     path = config["server"]["admin_groups_api"].rstrip("/") + "/%d/users" % gid
     data = request_resource_json(config, path, access_token)
-    return [parse_user(user_dict, config["server"]["url"]) for user_dict in data]
+    return [parse_user(user_dict, _server_public_url(config)) for user_dict in data]
 
 
 def add_group(config, access_token, name, description=None):

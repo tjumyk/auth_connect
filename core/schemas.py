@@ -123,6 +123,8 @@ if HAS_PYDANTIC:
         model_config = ConfigDict(extra="ignore")
 
         url: str
+        public_url: str | None = None
+        internal_url: str | None = None
         connect_page: str
         token_api: str
         profile_api: str

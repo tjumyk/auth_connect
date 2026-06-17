@@ -5,6 +5,8 @@
   ],
   "server": {
     "url": "http://localhost:8077",
+    "public_url": "http://localhost:8077",
+    "internal_url": "http://localhost:8077",
     "connect_page": "/oauth/connect",
     "token_api": "/api/oauth/token",
     "profile_api": "/api/account/me",

@@ -36,6 +36,11 @@ from .validation import serialize_error_payload, serialize_route_bindings
 _login_callback: Callable[[User], object] | None = None
 
 
+def _server_public_url(config: dict) -> str:
+    server = config["server"]
+    return server.get("public_url") or server["url"]
+
+
 def _error_html(msg, detail=None):
     if detail is None:
         detail = ""
@@ -71,7 +76,7 @@ def _build_redirect_url(original_path, state):
         params["original_path"] = original_path
     if state:
         params["state"] = state
-    redirect_url = config_server["url"] + config_server["connect_page"]
+    redirect_url = _server_public_url(config) + config_server["connect_page"]
     return redirect_url + "?" + urlencode(params)
 
 
@@ -90,7 +95,7 @@ def build_oauth_logout_url() -> str | None:
     logout_page = logout_page.strip()
     if not logout_page:
         return None
-    base_url = server.get("url", "").rstrip("/")
+    base_url = (server.get("public_url") or server.get("url") or "").rstrip("/")
     if not base_url:
         return None
     if not logout_page.startswith("/"):
@@ -307,7 +312,7 @@ def init_app(app: Flask, config_file: str = "oauth.config.json", login_callback=
 
     server_config = config["server"]
     client_config = config["client"]
-    server_url = server_config["url"]
+    server_url = _server_public_url(config)
 
     routes = serialize_route_bindings(
         {
